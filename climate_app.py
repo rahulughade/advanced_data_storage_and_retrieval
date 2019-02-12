@@ -28,8 +28,8 @@ Station = Base.classes.station
 
 # Create our session (link) from Python to the DB
 session_factory = sessionmaker(bind=engine)
-#Session = scoped_session(session_factory)
-session = session_factory()
+session = scoped_session(session_factory)
+#session = session_factory()
 
 #################################################
 # Flask Setup
@@ -49,8 +49,9 @@ def welcome():
         f"/api/v1.0/precipitation<br/>"
         f"/api/v1.0/stations<br/>"
         f"/api/v1.0/tobs<br/>"
-        f"/api/v1.0/<start><br/>"
-        f"/api/v1.0/<start>/<end><br/>"
+        f"/api/v1.0/start<br/>"
+        f"/api/v1.0/start/end<br/>"
+        f"For last two urls, enter the dates in yyyy-mm-dd format"
     )
 
 
@@ -92,3 +93,17 @@ def temp():
 
 @climate_app.route("/api/v1.0/<start>")
 
+def generatestart(start = None):
+        starttemp=session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
+        filter(Measurement.date >= start).all()
+        t1=list(np.ravel(starttemp))
+
+        return jsonify(t1)
+
+@climate_app.route("/api/v1.0/<start>/<end>")
+
+def generatestartend(start, end):
+    startendtemp=session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
+        filter(Measurement.date >= start).filter(Measurement.date <= end).all()
+    t2=list(np.ravel(startendtemp))
+    return jsonify(t2)
